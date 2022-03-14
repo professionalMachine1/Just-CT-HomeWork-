@@ -6,34 +6,35 @@
 #include <iostream>
 #include <math.h>
 #include <tuple>
-#include "TMatrix.h"
+#include "NextGenMatrix.h"
+
+struct SystParametrs
+{
+	Matrix<double> A, BTheta, LC, ABTh;
+	Vector<double> theta;
+};
 
 class DifferencialEquations
 {
 private:
-	double eps, xprev;
-	double x, h;
-	TVector<double> v, V, prev, preV, p;
-	TMatrix<double> A;
-	TVector<int> count;
+	double eps, tprev;
+	double t, h;
+	Vector<double> x, X, xprev, Xprev, p;
+	SystParametrs SP;
 	int Number;
 public:
-	DifferencialEquations(double X, TVector<double> U, double H, double e, int number);
-	tuple<TVector<double>, double> ComplitWithoutControl();
-	tuple<TVector<double>, double> ComplitWithControl(bool boolf = true);
-	TVector<double> RunKut4(double X, TVector<double>& V_, double H);
-	TVector<double> Function(double X, TVector<double>& V_);
-	void TakeVecParam(TVector<double> par) { p = par; }
-	void TakeMatrParam(TMatrix<double> matr) { A = matr; }
-	double max(TVector<double>& Vector);
-	TVector<int> GetCounts() { return count; }
-	void ChangeX(double X) { x = X; }
-	void ChangeH(double H) { h = H; }
-	void ChangeCounts(TVector<int> Count) { count = Count; }
-	void ChangeV(TVector<double>& V) { v = V; }
-	tuple<TVector<double>, double> GetData();
+	DifferencialEquations(double t_, Vector<double> x_, double h_, double eps_, int number);
+	std::tuple<Vector<double>, double> ComplitWithoutControl();
+	std::tuple<Vector<double>, double> ComplitWithControl(bool boolf = true);
+	Vector<double> RunKut4(double t_, Vector<double>& v_, double h_);
+	Vector<double> Function(double t_, Vector<double>& v_);
+	void TakeVecParam(Vector<double>& par) { p = par; }
+	void TakeStructParam(SystParametrs& par) { SP = par; }
+	void ChangeX(double t_) { t = t_; }
+	void ChangeH(double h_) { h = h_; }
+	void ChangeV(Vector<double>& x_) { x = x_; }
+	std::tuple<Vector<double>, double> GetData();
 	void BackStep(bool f = true);
-	~DifferencialEquations();
 };
 
 #endif

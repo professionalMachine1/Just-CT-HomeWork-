@@ -141,13 +141,13 @@
   <ItemGroup>
     <ClCompile Include="DifferencialEquations.cpp" />
     <ClCompile Include="Experiments.cpp" />
+    <ClCompile Include="NextGenMatrix.cpp" />
     <ClCompile Include="OpWithFucntions.cpp" />
-    <ClCompile Include="TMatrix.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DifferencialEquations.h" />
+    <ClInclude Include="NextGenMatrix.h" />
     <ClInclude Include="OpWithFucntions.h" />
-    <ClInclude Include="TMatrix.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

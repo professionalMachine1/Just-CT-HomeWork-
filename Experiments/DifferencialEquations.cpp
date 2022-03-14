@@ -1,60 +1,83 @@
 #include "DifferencialEquations.h"
 
-DifferencialEquations::DifferencialEquations(double X, TVector<double> U, double H, double e, int number)
+DifferencialEquations::DifferencialEquations(double t_, Vector<double> x_, double h_, double eps_, int number)
 {
-	x = X;
-	v = U;
-	V = TVector<double>(v.Size());
-	prev = v;
-	preV = V;
-	h = H;
-	Number = number;
-	eps = e;
-	count = TVector<int>(2);
-	p = TVector<double>(0);
+	t = t_;
+	x = x_, xprev = x;
+	X = Vector<double>(x.size()), Xprev = Vector<double>(x.size());
+	h = h_, Number = number, eps = eps_;
+	p = Vector<double>(0);
 }
 
-TVector<double> DifferencialEquations::RunKut4(double X, TVector<double>& V_, double H)
+Vector<double> DifferencialEquations::RunKut4(double t_, Vector<double>& v_, double h_)
 {
-	int k = v.Size();
-	TVector<double> k1(k), k2(k), k3(k), k4(k), res(k);
-	k1 = Function(X, V_);
-	k2 = V_ + k1 * H / 2, k2 = Function(X + H / 2, k2);
-	k3 = V_ + k2 * H / 2, k3 = Function(X + H / 2, k3);
-	k4 = V_ + k3 * H, k4 = Function(X + H, k4);
-	res = V_ + (k1 + k2 * 2 + k3 * 2 + k4) * H / 6;
+	int k = x.size();
+	Vector<double> k1(k), k2(k), k3(k), k4(k), res(k);
+	k1 = Function(t_, v_);
+	k2 = v_ + k1 * h_ / 2, k2 = Function(t_ + h_ / 2, k2);
+	k3 = v_ + k2 * h_ / 2, k3 = Function(t_ + h_ / 2, k3);
+	k4 = v_ + k3 * h_, k4 = Function(t_ + h_, k4);
+	res = v_ + (k1 + k2 * 2 + k3 * 2 + k4) * h_ / 6;
 	return res;
 }
 
-TVector<double> DifferencialEquations::Function(double X, TVector<double>& V_)
+Vector<double> DifferencialEquations::Function(double t_, Vector<double>& v_)
 {
-	TVector<double> res(V_.Size());
+	Vector<double> res(v_.size());
+	double u, denum;
 	switch (Number)
 	{
 	case 1:
-		res[0] = V_[2];
-		res[1] = V_[3];
-		res[2] = -131.432907 * V_[0] + 14.4427874 * V_[1]
-			- 26.3830839 * V_[2] + 25.3923040 * V_[3];
-		res[3] = -40.1635050 * V_[0] + 3.33546013 * V_[1]
-			- 5.98670166 * V_[2] + 5.86417393 * V_[3];
+		res = SP.ABTh * v_;
 		break;
 	case 2:
-		double u, denum;
-		u = (p[12] * V_[0] + p[13] * V_[1] + p[14] * V_[2] + p[15] * V_[3]);
-		denum = p[10] - p[11] * pow(cos(V_[0]), 2);
-		res[0] = V_[2];
-		res[1] = V_[3];
-		res[2] = (p[0] * cos(V_[0]) * u - p[1] * cos(V_[0]) * sin(V_[0]) * pow(V_[2], 2)
-			- p[2] * cos(V_[0]) * V_[3] + p[3] * sin(V_[0]) - p[4] * V_[2]) / denum;
-		res[3] = (p[5] * u - p[6] * sin(V_[0]) * pow(V_[2], 2) - p[7] * V_[3]
-			+ p[8] * cos(V_[0]) * sin(V_[0]) - p[9] * cos(V_[0]) * V_[2]) / denum;
+		u = SP.theta * v_;
+		denum = p[10] - p[11] * pow(cos(v_[0]), 2);
+		res[0] = v_[2];
+		res[1] = v_[3];
+		res[2] = (p[0] * cos(v_[0]) * u - p[1] * cos(v_[0]) * sin(v_[0]) * pow(v_[2], 2)
+			- p[2] * cos(v_[0]) * v_[3] + p[3] * sin(v_[0]) - p[4] * v_[2]) / denum;
+		res[3] = (p[5] * u - p[6] * sin(v_[0]) * pow(v_[2], 2) - p[7] * v_[3]
+			+ p[8] * cos(v_[0]) * sin(v_[0]) - p[9] * cos(v_[0]) * v_[2]) / denum;
 		break;
 	case 3:
-		res[0] = V_[2];
-		res[1] = V_[3];
-		res[2] = p[8] * V_[0] + p[9] * V_[1] + p[10] * V_[2] + p[11] * V_[3];
-		res[3] = p[12] * V_[0] + p[13] * V_[1] + p[14] * V_[2] + p[15] * V_[3];
+		// 0, ..., 3 - ksi; 4, ..., 7 - x
+		for (int i = 0; i < 4; i++)
+		{
+			res[i] = SP.ABTh[i][0] * v_[0] + SP.ABTh[i][1] * v_[1]
+				+ SP.ABTh[i][2] * v_[2] + SP.ABTh[i][3] * v_[3];
+			res[i] += SP.LC[i][0] * (v_[4] - v_[0]) + SP.LC[i][1] * (v_[5] - v_[1])
+				+ SP.LC[i][2] * (v_[6] - v_[2]) + SP.LC[i][3] * (v_[7] - v_[3]);
+		}
+		for (int i = 0; i < 4; i++)
+		{
+			res[4 + i] = SP.A[i][0] * v_[4] + SP.A[i][1] * v_[5]
+				+ SP.A[i][2] * v_[6] + SP.A[i][3] * v_[7];
+			res[4 + i] += SP.BTheta[i][0] * v_[0] + SP.BTheta[i][1] * v_[1]
+				+ SP.BTheta[i][2] * v_[2] + SP.BTheta[i][3] * v_[3];
+		}
+		break;
+	case 4:
+		u = (SP.theta[0] * v_[0] + SP.theta[1] * v_[1] + SP.theta[2] * v_[2] + SP.theta[3] * v_[3]);
+		denum = p[10] - p[11] * pow(cos(v_[0]), 2);
+		res[0] = v_[2];
+		res[1] = v_[3];
+		res[2] = (p[0] * cos(v_[0]) * u - p[1] * cos(v_[0]) * sin(v_[0]) * pow(v_[2], 2)
+			- p[2] * cos(v_[0]) * v_[3] + p[3] * sin(v_[0]) - p[4] * v_[2]) / denum;
+		res[3] = (p[5] * u - p[6] * sin(v_[0]) * pow(v_[2], 2) - p[7] * v_[3]
+			+ p[8] * cos(v_[0]) * sin(v_[0]) - p[9] * cos(v_[0]) * v_[2]) / denum;
+		for (int i = 0; i < 4; i++)
+		{
+			res[i] += SP.LC[i][0] * (v_[4] - v_[0]) + SP.LC[i][1] * (v_[5] - v_[1])
+				+ SP.LC[i][2] * (v_[6] - v_[2]) + SP.LC[i][3] * (v_[7] - v_[3]);
+		}
+		denum = p[10] - p[11] * pow(cos(v_[4]), 2);
+		res[4] = v_[6];
+		res[5] = v_[7];
+		res[6] = (p[0] * cos(v_[4]) * u - p[1] * cos(v_[4]) * sin(v_[4]) * pow(v_[6], 2)
+			- p[2] * cos(v_[4]) * v_[7] + p[3] * sin(v_[4]) - p[4] * v_[6]) / denum;
+		res[7] = (p[5] * u - p[6] * sin(v_[4]) * pow(v_[6], 2) - p[7] * v_[7]
+			+ p[8] * cos(v_[4]) * sin(v_[4]) - p[9] * cos(v_[4]) * v_[6]) / denum;
 		break;
 	default:
 		return 0;
@@ -62,77 +85,53 @@ TVector<double> DifferencialEquations::Function(double X, TVector<double>& V_)
 	return res;
 }
 
-double DifferencialEquations::max(TVector<double>& Vector)
+std::tuple<Vector<double>, double> DifferencialEquations::ComplitWithoutControl()
 {
-	double res = Vector[0];
-	for (int i = 1; i < v.Size(); i++)
-	{
-		if (Vector[i] > res)
-			res = Vector[i];
-	}
-	return res;
+	x = RunKut4(t, x, h);
+	t = t + h;
+	return std::make_tuple(x, t);
 }
 
-tuple<TVector<double>, double> DifferencialEquations::ComplitWithoutControl()
-{
-	v = RunKut4(x, v, h);
-	x = x + h;
-	return make_tuple(v, x);
-}
-
-tuple<TVector<double>, double> DifferencialEquations::ComplitWithControl(bool boolf)
+std::tuple<Vector<double>, double> DifferencialEquations::ComplitWithControl(bool boolf)
 {
 	//count[0] - число делений, count[1] - число умножений
-	TVector<double> S(v.Size());
-	prev = v;
-	preV = V;
-	// Vn+1/2
-	V = RunKut4(x, v, h / 2.0);
-	//V - Vn+1 с двумя крышечками (полученное с шагом h/2)
-	V = RunKut4(x + h / 2.0, V, h / 2.0);
+	Vector<double> S(x.size());
+	double MaxS;
+
+	xprev = x, Xprev = X;
+	// V - Vn+1 вычисление с шагом h/2
+	X = RunKut4(t, x, h / 2.0), X = RunKut4(t + h / 2.0, X, h / 2.0);
 	//v - Vn+1 вычисленное с шагом h
-	v = RunKut4(x, v, h);
-	S = (V - v) / 15.0;
+	x = RunKut4(t, x, h);
+
+	S = (X - x) / 15.0;
 	//Берем модуль погрешности
-	for (int i = 0; i < v.Size(); i++)
-	{
-		S[i] = fabs(S[i]);
-	}
+	S = abs(S);
 	//Находим max S
-	S[0] = max(S);
+	MaxS = S[MaxValue(S)];
 
-	xprev = x;
-	x = x + h;
-	if ((boolf) && (S[0] < eps / 32.0))
-	{
+	tprev = t, t = t + h;
+	if ((boolf) && (MaxS < eps / 32.0))
 		h = h * 2.0;
-		count[1]++;
-	}
 	else
-		if (S[0] > eps)
+		if (MaxS > eps)
+		{
 			BackStep();
+			ComplitWithControl();
+		}
 
-	return make_tuple(v, x);
+	return std::make_tuple(x, t);
 }
 
-tuple<TVector<double>, double> DifferencialEquations::GetData()
+std::tuple<Vector<double>, double> DifferencialEquations::GetData()
 {
-	return make_tuple(v, x);
+	return std::make_tuple(x, t);
 }
 
 void DifferencialEquations::BackStep(bool f)
 {
-	v = prev;
-	V = preV;
-	x = xprev;
+	t = tprev;
+	x = xprev, X = Xprev;
 	if (f)
-	{
 		h = h / 2.0;
-		count[0]++;
-	}
-}
-
-DifferencialEquations::~DifferencialEquations()
-{
-
 }
