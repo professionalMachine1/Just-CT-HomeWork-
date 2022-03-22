@@ -1,27 +1,33 @@
 #include "DifferencialEquations.h"
 
+DifferencialEquations::DifferencialEquations()
+{
+	Number = 0;
+	eps = 0, h = 0, tprev = 0;
+}
+
 DifferencialEquations::DifferencialEquations(double t_, Vector<double> x_, double h_, double eps_, int number)
 {
-	t = t_;
-	x = x_, xprev = x;
-	X = Vector<double>(x.size()), Xprev = Vector<double>(x.size());
+	state.t = t_;
+	state.x = x_, xprev = state.x;
+	X = Vector<double>(state.x.size()), Xprev = Vector<double>(state.x.size());
 	h = h_, Number = number, eps = eps_;
 	p = Vector<double>(0);
 }
 
 Vector<double> DifferencialEquations::RunKut4(double t_, Vector<double>& v_, double h_)
 {
-	int k = x.size();
+	int k = state.x.size();
 	Vector<double> k1(k), k2(k), k3(k), k4(k), res(k);
-	k1 = Function(t_, v_);
-	k2 = v_ + k1 * h_ / 2, k2 = Function(t_ + h_ / 2, k2);
-	k3 = v_ + k2 * h_ / 2, k3 = Function(t_ + h_ / 2, k3);
-	k4 = v_ + k3 * h_, k4 = Function(t_ + h_, k4);
+	k1 = systValue(t_, v_);
+	k2 = v_ + k1 * h_ / 2, k2 = systValue(t_ + h_ / 2, k2);
+	k3 = v_ + k2 * h_ / 2, k3 = systValue(t_ + h_ / 2, k3);
+	k4 = v_ + k3 * h_, k4 = systValue(t_ + h_, k4);
 	res = v_ + (k1 + k2 * 2 + k3 * 2 + k4) * h_ / 6;
 	return res;
 }
 
-Vector<double> DifferencialEquations::Function(double t_, Vector<double>& v_)
+Vector<double> DifferencialEquations::systValue(double t_, Vector<double>& v_)
 {
 	Vector<double> res(v_.size());
 	double u, denum;
@@ -85,34 +91,34 @@ Vector<double> DifferencialEquations::Function(double t_, Vector<double>& v_)
 	return res;
 }
 
-std::tuple<Vector<double>, double> DifferencialEquations::ComplitWithoutControl()
+SystemState& DifferencialEquations::ComplitWithoutControl()
 {
-	x = RunKut4(t, x, h);
-	t = t + h;
-	return std::make_tuple(x, t);
+	state.x = RunKut4(state.t, state.x, h);
+	state.t += h;
+	return state;
 }
 
-std::tuple<Vector<double>, double> DifferencialEquations::ComplitWithControl(bool boolf)
+SystemState& DifferencialEquations::ComplitWithControl(bool boolf)
 {
 	//count[0] - число делений, count[1] - число умножений
-	Vector<double> S(x.size());
+	Vector<double> S(state.x.size());
 	double MaxS;
 
-	xprev = x, Xprev = X;
+	xprev = state.x, Xprev = X;
 	// V - Vn+1 вычисление с шагом h/2
-	X = RunKut4(t, x, h / 2.0), X = RunKut4(t + h / 2.0, X, h / 2.0);
+	X = RunKut4(state.t, state.x, h / 2.0), X = RunKut4(state.t + h / 2.0, X, h / 2.0);
 	//v - Vn+1 вычисленное с шагом h
-	x = RunKut4(t, x, h);
+	state.x = RunKut4(state.t, state.x, h);
 
-	S = (X - x) / 15.0;
+	S = (X - state.x) / 15.0;
 	//Берем модуль погрешности
 	S = abs(S);
 	//Находим max S
 	MaxS = S[MaxValue(S)];
 
-	tprev = t, t = t + h;
+	tprev = state.t, state.t += h;
 	if ((boolf) && (MaxS < eps / 32.0))
-		h = h * 2.0;
+		h *= 2.0;
 	else
 		if (MaxS > eps)
 		{
@@ -120,18 +126,22 @@ std::tuple<Vector<double>, double> DifferencialEquations::ComplitWithControl(boo
 			ComplitWithControl();
 		}
 
-	return std::make_tuple(x, t);
-}
-
-std::tuple<Vector<double>, double> DifferencialEquations::GetData()
-{
-	return std::make_tuple(x, t);
+	return state;
 }
 
 void DifferencialEquations::BackStep(bool f)
 {
-	t = tprev;
-	x = xprev, X = Xprev;
+	state.t = tprev;
+	state.x = xprev, X = Xprev;
 	if (f)
-		h = h / 2.0;
+		h *= 0.5;
+}
+
+void DifferencialEquations::FillInTheFile(double min_t, double max_t, std::list<SystemState>& v, int MaxIt)
+{
+	for (int i = 0, t = min_t; (i < MaxIt) && (t < max_t); i++)
+	{
+		v.push_back(state);
+		ComplitWithControl();
+	}
 }
