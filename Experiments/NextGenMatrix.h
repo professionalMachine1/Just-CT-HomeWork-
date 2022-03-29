@@ -3,6 +3,7 @@
 #ifndef _NEXTGENMATRIX_H
 #define  _NEXTGENMATRIX_H
 
+#include <initializer_list>
 #include <iostream>
 #include <math.h>
 
@@ -15,11 +16,13 @@ protected:
 public:
 	//Конструкторы
 	Vector(int _size = 1);
-	Vector(const ValType& Val, int _size);
 	Vector(const Vector& Vec);
+	Vector(const ValType& Val, int _size);
+	Vector(std::initializer_list<ValType> in_list);
 
 	//Оператор присваивания
 	Vector& operator= (const Vector& Vec);
+	Vector& operator= (std::initializer_list<ValType> in_list);
 
 	//Операции с векторами
 	Vector  operator+(const Vector& Vec);
@@ -112,6 +115,17 @@ Vector<ValType>::Vector(const Vector& Vec)
 		pVector[i] = Vec.pVector[i];
 }
 
+template <typename ValType>
+Vector<ValType>::Vector(std::initializer_list<ValType> in_list)
+{
+	size_ = in_list.size();
+	pVector = new ValType[size_];
+
+	auto it = in_list.begin();
+	for (int i = 0; i < size_; i++)
+		pVector[i] = *it, it++;
+}
+
 /*
 
 	Оператор присваивания
@@ -132,6 +146,22 @@ Vector<ValType>& Vector<ValType>::operator= (const Vector<ValType>& Vec)
 		for (int i = 0; i < size_; i++)
 			pVector[i] = Vec.pVector[i];
 	}
+	return *this;
+}
+
+template <class ValType>
+Vector<ValType>& Vector<ValType>::operator= (std::initializer_list<ValType> in_list)
+{
+	if (size_ != in_list.size())
+	{
+		delete[]pVector;
+		size_ = in_list.size();
+		pVector = new ValType[size_];
+	}
+
+	auto it = in_list.begin();
+	for (int i = 0; i < size_; i++)
+		pVector[i] = *it, it++;
 	return *this;
 }
 
@@ -406,9 +436,11 @@ public:
 	Matrix(int rows, int cells);
 	Matrix(const Vector<Vector<ValType> >& mt);
 	Matrix(const ValType& Val, int rows, int cells);
+	Matrix(std::initializer_list<std::initializer_list<ValType>> in_list);
 
 	//Оператор присваивания
 	Matrix& operator= (const Matrix& mt);
+	Matrix& operator= (std::initializer_list<std::initializer_list<ValType>> in_list);
 
 	//Операции с матрицами
 	Matrix operator*(const Matrix& mt);
@@ -420,7 +452,7 @@ public:
 
 	//Работа со столбцами по индексу
 	Vector<ValType> GetCell(const int& ind);
-	Matrix& SetCell(const int& ind, const Vector<ValType>& Vec);
+	void PutCell(const int& ind, const Vector<ValType>& Vec);
 
 	//Операции с числами
 	Matrix  operator*(const ValType& Val);
@@ -501,6 +533,17 @@ Matrix<ValType>::Matrix(const ValType& Val, int rows, int cells) : Vector<Vector
 		Matrix::pVector[i] = Vector<ValType>(Val, cells);
 }
 
+template <class ValType>
+Matrix<ValType>::Matrix(std::initializer_list<std::initializer_list<ValType>> in_list)
+{
+	Matrix::size_ = in_list.size();
+	Matrix::pVector = new Vector<ValType>[Matrix::size_];
+
+	auto it = in_list.begin();
+	for (int i = 0; i < Matrix::size_; i++)
+		Matrix::pVector[i] = *it, it++;
+}
+
 /*
 
 	Оператор присваивания
@@ -521,6 +564,23 @@ Matrix<ValType>& Matrix<ValType>::operator= (const Matrix& mt)
 		for (int i = 0; i < Matrix::size_; i++)
 			Matrix::pVector[i] = mt.pVector[i];
 	}
+	return *this;
+}
+
+template <class ValType>
+Matrix<ValType>& Matrix<ValType>::operator= (std::initializer_list<std::initializer_list<ValType>> in_list)
+{
+	if (Matrix::size_ != in_list.size())
+	{
+		delete[]Matrix::pVector;
+		Matrix::size_ = in_list.size();
+		Matrix::pVector = new Vector<ValType>[Matrix::size_];
+	}
+
+	auto it = in_list.begin();
+	for (int i = 0; i < Matrix::size_; i++)
+		Matrix::pVector[i] = *it, it++;
+
 	return *this;
 }
 
@@ -590,11 +650,10 @@ Vector<ValType> Matrix<ValType>::GetCell(const int& ind)
 }
 
 template <class ValType>
-Matrix<ValType>& Matrix<ValType>::SetCell(const int& ind, const Vector<ValType>& Vec)
+void Matrix<ValType>::PutCell(const int& ind, const Vector<ValType>& Vec)
 {
 	for (int i = 0; i < Matrix::size_; i++)
 		Matrix::pVector[i][ind] = Vec[i];
-	return *this;
 }
 
 /*

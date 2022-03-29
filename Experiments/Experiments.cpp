@@ -58,12 +58,12 @@ int main()
 	P.Beq = 5.4, P.Bp = 2.4 * pow(10, -3), P.g = 9.81;
 
 	//Решение для непрерывной системы
-	GETNAME(Непрерывная система);
-	ContinuosSystem();
+	//GETNAME(Непрерывная система);
+	//ContinuosSystem();
 
 	//Решение для дискретной системы
-	GETNAME(Дискретная система);
-	DiscreteSystem();
+	//GETNAME(Дискретная система);
+	//DiscreteSystem();
 	
 	return 0;
 }
