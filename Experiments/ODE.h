@@ -1,29 +1,11 @@
 #pragma once
 
-#ifndef DIFFERENCIALEQUATIONS_H
-#define DIFFERENCIALEQUATIONS_H
+#ifndef ODE_H
+#define ODE_H
 
-#include <iostream>
-#include <fstream>
-#include <math.h>
-#include <string>
-#include <tuple>
-#include <list>
-#include "NextGenMatrix.h"
+#include "Structures.h"
 
-struct ContinuosSystemParametrs
-{
-	Matrix<double> A, BTheta, LC, ABTh;
-	Vector<double> theta, L, B, C;
-};
-
-struct SystemState 
-{
-	Vector<double> x;
-	double t = 0;
-};
-
-class DifferencialEquations
+class ODE4
 {
 private:
 	int Number;
@@ -32,8 +14,8 @@ private:
 	Vector<double> X, xprev, Xprev, p;
 	ContinuosSystemParametrs SP;
 public:
-	DifferencialEquations();
-	DifferencialEquations(double t_, Vector<double> x_, double h_, double eps_, int number);
+	ODE4();
+	ODE4(double t_, Vector<double> x_, double h_, double eps_, int number);
 
 	SystemState& ComplitWithoutControl();
 	SystemState& ComplitWithControl(bool boolf = true);
@@ -51,7 +33,9 @@ public:
 	SystemState& GetData() { return state; }
 	void BackStep(bool f = true);
 
-	void FillInTheFile(double min_t, double max_t, std::list<SystemState>& v, int MaxIt = 100000);
+	void WriteToFile(double max_t, std::string name, int MaxIt = 100000);
+	void WriteToFileWithControl(double max_t, std::string name, int MaxIt = 100000);
+
 };
 
 #endif

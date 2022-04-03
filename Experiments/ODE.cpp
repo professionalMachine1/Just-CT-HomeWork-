@@ -1,12 +1,12 @@
-#include "DifferencialEquations.h"
+#include "ODE.h"
 
-DifferencialEquations::DifferencialEquations()
+ODE4::ODE4()
 {
 	Number = 0;
 	eps = 0, h = 0, tprev = 0;
 }
 
-DifferencialEquations::DifferencialEquations(double t_, Vector<double> x_, double h_, double eps_, int number)
+ODE4::ODE4(double t_, Vector<double> x_, double h_, double eps_, int number)
 {
 	state.t = t_;
 	state.x = x_, xprev = state.x;
@@ -15,7 +15,7 @@ DifferencialEquations::DifferencialEquations(double t_, Vector<double> x_, doubl
 	p = Vector<double>(0);
 }
 
-Vector<double> DifferencialEquations::RunKut4(double t_, Vector<double>& v_, double h_)
+Vector<double> ODE4::RunKut4(double t_, Vector<double>& v_, double h_)
 {
 	int k = state.x.size();
 	Vector<double> k1(k), k2(k), k3(k), k4(k), res(k);
@@ -27,7 +27,7 @@ Vector<double> DifferencialEquations::RunKut4(double t_, Vector<double>& v_, dou
 	return res;
 }
 
-Vector<double> DifferencialEquations::systValue(double t_, Vector<double>& v_)
+Vector<double> ODE4::systValue(double t_, Vector<double>& v_)
 {
 	Vector<double> res(v_.size());
 	double u, denum;
@@ -91,14 +91,14 @@ Vector<double> DifferencialEquations::systValue(double t_, Vector<double>& v_)
 	return res;
 }
 
-SystemState& DifferencialEquations::ComplitWithoutControl()
+SystemState& ODE4::ComplitWithoutControl()
 {
 	state.x = RunKut4(state.t, state.x, h);
 	state.t += h;
 	return state;
 }
 
-SystemState& DifferencialEquations::ComplitWithControl(bool boolf)
+SystemState& ODE4::ComplitWithControl(bool boolf)
 {
 	//count[0] - число делений, count[1] - число умножений
 	Vector<double> S(state.x.size());
@@ -129,7 +129,7 @@ SystemState& DifferencialEquations::ComplitWithControl(bool boolf)
 	return state;
 }
 
-void DifferencialEquations::BackStep(bool f)
+void ODE4::BackStep(bool f)
 {
 	state.t = tprev;
 	state.x = xprev, X = Xprev;
@@ -137,11 +137,40 @@ void DifferencialEquations::BackStep(bool f)
 		h *= 0.5;
 }
 
-void DifferencialEquations::FillInTheFile(double min_t, double max_t, std::list<SystemState>& v, int MaxIt)
+void ODE4::WriteToFile(double max_t, std::string name, int MaxIt)
 {
-	for (int i = 0, t = min_t; (i < MaxIt) && (t < max_t); i++)
+	Vector<std::ofstream> data(state.x.size());
+	for (int i = 0; i < state.x.size(); i++)
+		data[i].open(name + std::to_string(i) + ".txt", std::ios_base::out);
+	for (int i = 0; (i < MaxIt) && (state.t < max_t); i++)
 	{
-		v.push_back(state);
+		for (int j = 0; j < state.x.size(); j++)
+			data[j] << state.t << " " << state.x[j] << std::endl;
 		ComplitWithControl();
 	}
+	for (int i = 0; i < state.x.size(); i++)
+		data[i].close();
+}
+
+void ODE4::WriteToFileWithControl(double max_t, std::string name, int MaxIt)
+{
+	Vector<std::ofstream> data(state.x.size());
+	for (int i = 0; i < state.x.size(); i++)
+		data[i].open(name + std::to_string(i) + ".txt", std::ios_base::out);
+	std::ofstream udata(name + "control.txt", std::ios_base::out);
+
+	double temp = 0;
+
+	for (int i = 0; (i < MaxIt) && (state.t < max_t); i++)
+	{
+		for (int j = 0; j < state.x.size(); j++)
+			data[j] << state.t << " " << state.x[j] << std::endl;
+		temp = (SP.theta[0] * state.x[0] + SP.theta[1] * state.x[1]
+			+ SP.theta[2] * state.x[2] + SP.theta[3] * state.x[3]);
+		udata << state.t << " " << temp << std::endl;
+		ComplitWithControl();
+	}
+	for (int i = 0; i < state.x.size(); i++)
+		data[i].close();
+	udata.close();
 }

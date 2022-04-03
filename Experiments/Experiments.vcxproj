@@ -139,15 +139,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="DifferencialEquations.cpp" />
     <ClCompile Include="Experiments.cpp" />
     <ClCompile Include="NextGenMatrix.cpp" />
+    <ClCompile Include="ODE.cpp" />
     <ClCompile Include="OpWithFucntions.cpp" />
+    <ClCompile Include="ORE.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DifferencialEquations.h" />
     <ClInclude Include="NextGenMatrix.h" />
+    <ClInclude Include="ODE.h" />
     <ClInclude Include="OpWithFucntions.h" />
+    <ClInclude Include="ORE.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Structures.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Experiments.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
